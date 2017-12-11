@@ -1,0 +1,95 @@
+public class Update extends Activity {
+
+    Button update_back;
+    EditText update_title;
+    EditText update_text;
+    String title,text;
+    int s1=0;
+
+    Cursor cursor;
+    SQLiteDatabase db = null;
+    final static String db_name = "db1.db";
+    final static String table_name = "table01";
+    final static String create_table = "CREATE TABLE "+table_name+"(_id INTEGER PRIMARY KEY, title TEXT, text TEXT)";
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.update);
+
+        update_title= (EditText)findViewById(R.id.update_title);
+        update_text = (EditText)findViewById(R.id.update_text);
+        update_back = (Button)findViewById(R.id.update_back);
+
+        db = openOrCreateDatabase("db1.db", MODE_PRIVATE, null);
+        try {
+            db.execSQL(create_table);
+        } catch (Exception e) {
+        }
+
+        Bundle b2 = this.getIntent().getExtras();
+        if(b2 != null){
+            s1=b2.getInt("key1");
+
+            cursor = db.rawQuery("SELECT * FROM table01 WHERE _id = '" + s1 +"'", null);
+            cursor.moveToFirst();
+            title = cursor.getString(1);//查詢table01的第一欄位資料,即title
+            text = cursor.getString(2);//查詢table01的第二欄位資料,即text
+            update_title.setText(title);
+            update_text.setText(text);
+        }
+
+        update_back.setOnClickListener(new OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // TODO Auto-generated method stub
+                if(s1!=0){
+                    ContentValues cv = new ContentValues();
+                    cv.put("title",update_title.getText().toString());
+                    cv.put("text", update_text.getText().toString());
+                    db.update("table01",cv, "_id="+s1, null);
+
+                    Intent i = new Intent(Update.this,MainActivity.class);
+                    startActivity(i);
+
+                    finish();
+                }
+
+            }
+        });
+
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        db.close();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.delete, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item){
+
+        switch(item.getItemId()){
+            case R.id.clear:
+                update_title.setText("");
+                update_text.setText("");
+                break;
+            case R.id.back:
+                Intent i = new Intent(Update.this,MainActivity.class);
+                startActivity(i);
+
+                finish();
+                break;
+            default:
+
+                return super.onOptionsItemSelected(item);
+        }
+
+        return true;
+    }
+}
