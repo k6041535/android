@@ -1,0 +1,106 @@
+public class MainActivity extends Activity {
+
+    Button insert;
+    ListView listview;
+
+    SQLiteDatabase db = null;
+    final static String db_name = "db1.db";
+    final static String table_name = "table01";
+    final static String create_table = "CREATE TABLE "+table_name+"(_id INTEGER PRIMARY KEY, title TEXT, text TEXT)";
+    Cursor cursor;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_main);
+
+        insert = (Button)findViewById(R.id.insert);
+        listview=(ListView)findViewById(R.id.listView1);
+
+        db = openOrCreateDatabase("db1.db", MODE_PRIVATE, null);
+        try {
+            db.execSQL(create_table);
+        } catch (Exception e) {
+        }
+        cursor = getAll();
+        UpdataAdapter(cursor);
+
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+            @Override
+            public void onItemClick(AdapterView<?> arg0, View arg1, final int arg2,
+                                    final long arg3) {
+                new AlertDialog.Builder(MainActivity.this)
+                        .setItems(new String[]{"刪除","修改","取消"}, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+
+                                if(which==0){
+                                    cursor.moveToPosition(arg2);
+                                    cursor.getInt(0);
+                                    db.delete("table01", "_id="+cursor.getInt(0), null);
+
+                                    cursor = getAll();
+                                    UpdataAdapter(cursor);
+                                }
+                                else if(which==1){
+                                    cursor.moveToPosition(arg2);
+                                    int c=cursor.getInt(0);
+
+                                    Intent i = new Intent(MainActivity.this,Update.class);
+
+                                    Bundle b = new Bundle();
+                                    b.putInt("key1",c );
+                                    i.putExtras(b);
+                                    startActivity(i);
+                                    finish();
+                                }
+                                else{}
+                            }
+
+                        }).show();
+
+            }
+        });
+
+        insert.setOnClickListener(new OnClickListener() {
+
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(MainActivity.this,Insert.class);
+                startActivity(i);
+                finish();
+            }
+        });
+    }
+
+    private void UpdataAdapter(Cursor cursor) {
+        if(cursor!=null && cursor.getCount()>=0){
+            SimpleCursorAdapter adapter = new SimpleCursorAdapter(
+                    this,
+                    android.R.layout.simple_list_item_2,
+                    cursor,
+                    new String[]{"title","text"},
+                    new int[] {android.R.id.text1,android.R.id.text2});
+            listview.setAdapter(adapter);
+        }
+
+
+    }
+    private Cursor getAll() {
+        Cursor cursor = db.rawQuery("SELECT * FROM table01",null);
+        return cursor;
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.main, menu);
+        return true;
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        db.close();
+    }
+}
